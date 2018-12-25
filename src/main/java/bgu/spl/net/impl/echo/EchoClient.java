@@ -18,6 +18,7 @@ public class EchoClient {
         if (args.length < 2) {
             System.out.println("you must supply two arguments: host, message");
             System.exit(1);
+            System.out.println("hello");
         }
 
         //BufferedReader and BufferedWriter automatically using UTF-8 encoding

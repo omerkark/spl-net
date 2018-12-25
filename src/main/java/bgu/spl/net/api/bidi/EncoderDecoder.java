@@ -1,33 +1,45 @@
 package bgu.spl.net.api.bidi;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
+import bgu.spl.net.api.Messages.Message;
+import bgu.spl.net.api.Messages.Register;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class EncoderDecoder implements MessageEncoderDecoder {
 
     private byte[] bytes = new byte[1 << 10];
     private int len = 0;
-    int counter = 0;
-    short Opcode = -1;
+    private short Opcode;
+    private int registerLen = -1;
 
     @Override
     public Object decodeNextByte(byte nextByte) {
 
 
-        if(counter < 2){
+        if(len < 2){
             pushByte(nextByte);
-            counter++;
+            if (len == 2)
+                Opcode = bytesToShort(bytes);
             return null;
         }
-        if (Opcode == -1)
-            Opcode = bytesToShort(bytes);
-
         switch (Opcode){
             // register
             case 1:
+                Register register;
+                if (nextByte == 00 & registerLen == -1) {
+                    registerLen = len;
+                    return null;
+                }
+                if (nextByte == 00 & registerLen != -1) {
+                    register = new Register(popString(2, registerLen), popString(registerLen + 1, len));
+                    return register;
+                }
+                else
+                    pushByte(nextByte);
+                    return null;
 
-                break;
             //   Login request (LOGIN)
             case 2:
                 break;
@@ -59,6 +71,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
 
         }
+        return null;
     }
 
     public short bytesToShort(byte[] byteArr)
@@ -75,6 +88,14 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         }
 
         bytes[len++] = nextByte;
+    }
+
+    private String popString(int offset, int len) {
+        //notice that we explicitly requesting that the string will be decoded from UTF-8
+        //this is not actually required as it is the default encoding in java.
+        String result = new String(bytes, offset, len, StandardCharsets.UTF_8);
+
+        return result;
     }
 
     @Override

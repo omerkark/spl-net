@@ -4,6 +4,7 @@ public class Post  {
 
     private short OpCode = 5;
     private String Content;
+
     public Post(String content) {
         Content = content;
     }

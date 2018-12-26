@@ -1,11 +1,11 @@
 package bgu.spl.net.api.Messages;
 
-public class Post  {
+public class Post extends Message  {
 
-    private short OpCode = 5;
     private String Content;
 
     public Post(String content) {
+        super((short)5);
         Content = content;
     }
 }

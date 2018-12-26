@@ -1,12 +1,13 @@
 package bgu.spl.net.api.Messages;
 
-public class Register {
+public class Register extends Message {
 
-    private short Opcode = 1;
+
     private String userName;
     private String PassWord;
 
     public Register(String userName, String passWord) {
+        super((short)1);
         this.userName = userName;
         PassWord = passWord;
     }

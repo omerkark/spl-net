@@ -59,6 +59,8 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
 
         }
+
+        return "hello";
     }
 
     public short bytesToShort(byte[] byteArr)

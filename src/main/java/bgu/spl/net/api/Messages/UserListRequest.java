@@ -1,8 +1,8 @@
 package bgu.spl.net.api.Messages;
 
-public class UserListRequest {
+public class UserListRequest extends Message {
 
-    private short Opcode = 7;
-
-
+    public UserListRequest() {
+        super((short)7);
+    }
 }

@@ -1,12 +1,13 @@
 package bgu.spl.net.api.Messages;
 
-public class PM {
+public class PM extends Message{
 
-    private short Opcode = 6;
     private String UserNameToSendTo ;
     private String content;
 
-    public PM(String userNameToSendTo) {
+    public PM(String userNameToSendTo, String content) {
+        super((short)6);
         UserNameToSendTo = userNameToSendTo;
+        this.content = content;
     }
 }

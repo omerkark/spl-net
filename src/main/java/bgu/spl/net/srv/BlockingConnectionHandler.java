@@ -1,5 +1,4 @@
 package bgu.spl.net.srv;
-
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.MessagingProtocol;
 import java.io.BufferedInputStream;
@@ -15,11 +14,17 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     private BufferedInputStream in;
     private BufferedOutputStream out;
     private volatile boolean connected = true;
+    private final int ConnectionId;
 
-    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) {
+    public int getConnectionId() {
+        return ConnectionId;
+    }
+
+    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol, int connectionId) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
+        ConnectionId = connectionId;
     }
 
     @Override
@@ -51,5 +56,10 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     public void close() throws IOException {
         connected = false;
         sock.close();
+    }
+
+    @Override
+    public void send(T msg) {
+
     }
 }

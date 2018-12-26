@@ -6,7 +6,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
     @Override
     public void start(int connectionId, Connections<Message> connections) {
-
+        // here if he is registerd proces or register it;
     }
 
     @Override

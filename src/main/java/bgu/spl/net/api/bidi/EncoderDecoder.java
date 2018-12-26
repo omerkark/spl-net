@@ -14,7 +14,6 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
     private byte[] bytes = new byte[1 << 10];
     private int len = 0;
-    int counter = 0;
     private short Opcode;
     private int offSet = 2;
     private int counterFollow = 1;
@@ -41,24 +40,31 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
                 if (registerLogin(nextByte) == null)
                     return null;
-                else
-                    return new Register(registerLogin(nextByte)[0], registerLogin(nextByte)[1]);
-
+                else {
+                    Register register = new Register(registerLogin(nextByte)[0], registerLogin(nextByte)[1]);
+                    resetAll();
+                    return register;
+                }
 
                 //   Login request (LOGIN)
             case 2:
                 if (registerLogin(nextByte) == null)
                     return null;
-                else
-                    return new Login(registerLogin(nextByte)[0], registerLogin(nextByte)[1]);
+                else {
+                    Login login = new Login(registerLogin(nextByte)[0], registerLogin(nextByte)[1]);
+                    resetAll();
+                    return login;
+                }
 
                 //Logout request (LOGOUT)
             case 3:
-                return new Logout();
+                Logout logout = new Logout();
+                resetAll();
+                return logout;
 
             // Follow / Unfollow request
             case 4:
-                if (len >= 3) {
+                if (len >= 5) {
                     if (offSet == -1)
                         offSet = 5;
 
@@ -74,9 +80,11 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                         return null;
                     }
                     if (nextByte == 0) {
+                        Follow_UnFollow follow = new Follow_UnFollow(bytes[2] == 1, numberOfusers, followList);
                         resetAll();
-                        return new Follow_UnFollow(bytes[2] == 1, numberOfusers, followList);
+                        return follow;
                     }
+
                     pushByte(nextByte);
                     len++;
                     return null;
@@ -94,8 +102,9 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                     return null;
                 }
                 if (nextByte == 0){
+                    String Post = post;
                     resetAll();
-                    return post;
+                    return new Post(Post);
                 }
                 pushByte(nextByte);
                 len++;
@@ -103,17 +112,43 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
             // PM request (PM)
             case 6:
-
-                break;
+                if (nextByte == 0 & offSet == 2) {
+                    followList.add(0,popString(offSet,len-1));
+                    offSet = len+1;
+                    len++;
+                    return null;
+                }
+                if (nextByte == 20 & offSet != 2) {
+                    post = post + " " + popString(offSet, len - 1);
+                    offSet = len+1;
+                    len++;
+                    return null;
+                }
+                if (nextByte == 0 & offSet != 2) {
+                    PM pm = new PM(followList.get(0), post);
+                    resetAll();
+                    return pm;
+                }
+                pushByte(nextByte);
+                len++;
+                return null;
 
             // User list request (USERLIST)
             case 7:
+                UserListRequest listRequest = new UserListRequest();
+                resetAll();
+                return listRequest;
 
-                break;
             // Stats request (STAT)
             case 8:
-                break;
-
+                if (nextByte == 0) {
+                    StatsRequest statsRequest = new StatsRequest(popString(offSet, len - 1));
+                    resetAll();
+                    return statsRequest;
+                }
+                pushByte(nextByte);
+                len++;
+                return null;
         }
 
         return "hellow world";
@@ -164,7 +199,6 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         if (nextByte == 00 & offSet != -1) {
             nameNpassword[0] = popString(2, offSet -1);
             nameNpassword[1] = popString(offSet + 1, len);
-            resetAll();
             return nameNpassword;
         }
         else

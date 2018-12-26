@@ -51,6 +51,7 @@ public class Reactor<T> implements Server<T> {
             serverSock.register(selector, SelectionKey.OP_ACCEPT);
 			System.out.println("Server started");
 
+			// think where to do this and where do we add the connections.
             BGUConnections bguConnections = new BGUConnections();
 
             while (!Thread.currentThread().isInterrupted()) {
@@ -64,6 +65,7 @@ public class Reactor<T> implements Server<T> {
                         continue;
                     } else if (key.isAcceptable()) {
                         handleAccept(serverSock, selector);
+
                     } else {
                         handleReadWrite(key);
                     }

@@ -153,6 +153,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
         return "hellow world";
     }
+
     private String popString(int offset,int len){
         //notice that we explicitly requesting that the string will be decoded from UTF-8
         //this is not actually required as it is the default encoding in java.

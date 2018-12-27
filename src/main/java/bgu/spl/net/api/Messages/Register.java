@@ -11,4 +11,12 @@ public class Register extends Message {
         this.userName = userName;
         PassWord = passWord;
     }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getPassWord() {
+        return PassWord;
+    }
 }

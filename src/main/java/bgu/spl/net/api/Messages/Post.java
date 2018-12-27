@@ -8,4 +8,8 @@ public class Post extends Message  {
         super((short)5);
         Content = content;
     }
+
+    public String getContent() {
+        return Content;
+    }
 }

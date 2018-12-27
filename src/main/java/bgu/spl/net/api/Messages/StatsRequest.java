@@ -8,4 +8,9 @@ public class StatsRequest extends Message {
         super((short)8);
         this.userNameToGetDAataOn = userNameToGetDAataOn;
     }
+
+    public String getUserNameToGetDAataOn() {
+        return userNameToGetDAataOn;
+    }
+
 }

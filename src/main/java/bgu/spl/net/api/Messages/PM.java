@@ -10,4 +10,12 @@ public class PM extends Message{
         UserNameToSendTo = userNameToSendTo;
         this.content = content;
     }
+
+    public String getUserNameToSendTo() {
+        return UserNameToSendTo;
+    }
+
+    public String getContent() {
+        return content;
+    }
 }

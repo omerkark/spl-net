@@ -41,4 +41,8 @@ public class BGUConnections<T> implements Connections<T> {
             // add to the hash map the connection handler
         }
     }
+
+    public ConnectionHandler getConectionHandler(int id){
+        return connectionHandler.get(id);
+    }
 }

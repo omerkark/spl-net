@@ -80,7 +80,6 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         return new Register(splited[0], splited[1]);
     }
 
-
         private String popString() {
             //notice that we explicitly requesting that the string will be decoded from UTF-8
             //this is not actually required as it is the default encoding in java.
@@ -99,7 +98,6 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         result += (short)(byteArr[1] & 0xff);
         return result;
     }
-
 
     private void pushByte(byte nextByte) {
         if (len >= bytes.length) {

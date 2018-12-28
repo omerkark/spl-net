@@ -3,6 +3,7 @@ package bgu.spl.net.api.bidi;
 import bgu.spl.net.api.Messages.*;
 
 import java.util.List;
+import java.util.Vector;
 
 public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
@@ -43,8 +44,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             if(!dataBase.containsUser(login.getUserName()) &&
                     dataBase.getUser(login.getUserName()).getPassWord() != login.getPassWord() &&
                     dataBase.isConnected(id, login.getUserName())){
-                ErrorMessage errorMessage = new ErrorMessage((short)11, (short)2);
-                Connection.send(id, errorMessage);
+                    Connection.send(id, new ErrorMessage((short)11, (short)2));
             }else{
                 dataBase.connectUser(id, login.getUserName());
                 Connection.send(id, new ACK((short)10 , (short)2));
@@ -62,13 +62,18 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short)11, (short)4));
             }// the client is connected.
             else{
+                    List<String> successFollow_UnFollow = new Vector<>();
                     if(follow_unFollow.isFollow_true_Unfollow_false()){
-                        List<String> succssFollow = dataBase.TryFollow(follow_unFollow.getUserNameList());
+                         successFollow_UnFollow = dataBase.TryFollow(follow_unFollow.getUserNameList() , id);
+                    successFollow_UnFollow = dataBase.TryUnFollow(follow_unFollow.getUserNameList(), id);
+                    }
+
+                    if(successFollow_UnFollow.size() > 0){
+                        ACK ack = new ACK((short)10, (short)4);
 
                     }
-                    else{
-                        List<String> successUnFollow = dataBase.TryUnFollow(follow_unFollow.getUserNameList());
-                    }
+                    // there was no successesful follow/ unfollow.
+                    else Connection.send(id, new ErrorMessage((short)11, (short)4));
             }
 
         }
@@ -79,9 +84,15 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         else if(message instanceof PM){
 
         }
+        //~~~~~~~~~~~~~~~~~~~~~~~~USERLIST~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if(message instanceof UserListRequest){
-
+            if(!dataBase.isConnected(id))
+                Connection.send(id, new ErrorMessage((short)11, (short)7));
+        }else{
+            dataBase.
         }
+
+        //~~~~~~~~~~~~~~~~~~~~~~~STATSREQUEST~~~~~~~~~~~~~~~~~~~~~~~~~
         else if(message instanceof StatsRequest){
 
         }

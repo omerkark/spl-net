@@ -18,7 +18,5 @@ public class ACK extends Message {
         return optional;
     }
 
-    public short getOpCodeForMessage() {
-        return opCodeForMessage;
-    }
+    public short getOpCodeForMessage() { return opCodeForMessage; }
 }

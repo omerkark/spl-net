@@ -4,6 +4,7 @@ import bgu.spl.net.api.Messages.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Vector;
 
 public class EncoderDecoder implements MessageEncoderDecoder {
 
@@ -52,7 +53,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                     return null;
                 }
                 if (followcounter == 3){
-                    follow = opCodeArr[0] == 1;
+                    follow = opCodeArr[0] == 0;
                     byte[] numberOfUsers = new byte[2];
                     numberOfUsers[0] = opCodeArr[1];
                     numberOfUsers[1] = opCodeArr[2];
@@ -152,7 +153,6 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         }
     }
 
-
     private String popString() {
         //notice that we explicitly requesting that the string will be decoded from UTF-8
         //this is not actually required as it is the default encoding in java.
@@ -172,6 +172,12 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         numOfusers = 0;
         followcounter = 0;
     }
+    private byte[] shortToBytes(short num) {
+        byte[] bytesArr = new byte[2];
+        bytesArr[0] = (byte)((num >> 8) & 0xFF);
+        bytesArr[1] = (byte)(num & 0xFF);
+        return bytesArr;
+    }
 
     public short bytesToShort(byte[] byteArr) {
         short result = (short)((byteArr[0] & 0xff) << 8);
@@ -188,6 +194,42 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
     @Override
     public byte[] encode(Object message) {
+            int Case;
+            if (message instanceof ACK)
+                Case = ((ACK) message).getOpCodeForMessage();
+            else
+                Case = 11;
+        switch (Case){
+            case 4:
+                short ack = 10;
+                String msg = ((ACK) message).getOptional();
+                Vector Bytes = new Vector();
+                byte[] opcodeACK = shortToBytes(ack);
+                byte[] opcodeMSG = shortToBytes(((ACK) message).getOpCodeForMessage());
+                Bytes.addAll(Arrays.asList(opcodeACK));
+                Bytes.addAll(Arrays.asList(opcodeMSG));
+                int indexOfNumber = msg.indexOf('\0');
+                int numberOfUsers = Integer.valueOf(msg.substring(0,indexOfNumber+1));
+                short NumOfusers = (short)numberOfUsers;
+                byte[] numberOfusers = shortToBytes(NumOfusers);
+                Bytes.addAll(Arrays.asList(numberOfusers));
+                byte[] ListOfusers = msg.substring(indexOfNumber+1).getBytes();
+                Bytes.addAll(Arrays.asList(ListOfusers));
+
+                byte[] bytesTosend = new byte[Bytes.size()];
+                for (int i=0; i<Bytes.size();i++){
+                 bytesTosend[i] = (byte)Bytes.remove(0);
+                }
+
+            case 7:
+
+            case 8:
+
+            case 11:
+                default:
+
+        }
+
         return new byte[0];
     }
 

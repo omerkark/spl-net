@@ -8,4 +8,8 @@ public class ErrorMessage extends Message{
         super(opcode);
         this.opCodeForMessage = opCodeForMessage;
     }
+
+    public short getOpCodeForMessage() {
+        return opCodeForMessage;
+    }
 }

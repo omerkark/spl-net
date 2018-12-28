@@ -20,7 +20,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
     @Override
     public void process(Message message) {
 
-        DataBase dataBase= DataBase.getInstance();
+        DataBase dataBase = DataBase.getInstance();
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~REGISTER~~~~~~~~~~~~~~~~~~~~~
         if(message instanceof Register){

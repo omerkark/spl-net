@@ -1,173 +1,182 @@
 package bgu.spl.net.api.bidi;
-
 import bgu.spl.net.api.MessageEncoderDecoder;
-
-
-
 import bgu.spl.net.api.Messages.*;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Vector;
 
 public class EncoderDecoder implements MessageEncoderDecoder {
 
     private byte[] bytes = new byte[1 << 10];
+    private byte [] opCodeArr = new byte[3];
     private int len = 0;
+    private int OpcodeCounter = 0;
+    private int Counter = 0;
     private short Opcode;
-    private int offSet = 2;
-    private int counterFollow = 1;
-    private LinkedList<String> followList = new LinkedList();
-    private String post = "";
+    private boolean follow = false;
+    private int numOfusers;
+    private int followcounter = 0;
+
 
 
     @Override
-    public Object decodeNextByte(byte nextByte) {
+    public Object decodeNextByte(byte nextByte)  {
 
-
-        if (len < 2) {
-            pushByte(nextByte);
-            len++;
+        if (OpcodeCounter < 2) {
+            opCodeArr[OpcodeCounter] = nextByte;
+            OpcodeCounter++;
             return null;
         }
-        if (Opcode == -1)
-            Opcode = bytesToShort(bytes);
+        if (OpcodeCounter == 2){
+            Opcode = bytesToShort(opCodeArr);
+            OpcodeCounter++;
+        }
 
         switch (Opcode) {
-
             // register
             case 1:
-
-                if (registerLogin(nextByte) == null)
-                    return null;
-                else {
-                    Register register = new Register(registerLogin(nextByte)[0], registerLogin(nextByte)[1]);
-                    resetAll();
-                    return register;
-                }
-
-                //   Login request (LOGIN)
+                return parseLogReg(Opcode,nextByte);
+            //   Login request (LOGIN)
             case 2:
-                if (registerLogin(nextByte) == null)
-                    return null;
-                else {
-                    Login login = new Login(registerLogin(nextByte)[0], registerLogin(nextByte)[1]);
-                    resetAll();
-                    return login;
-                }
-
-                //Logout request (LOGOUT)
+                return parseLogReg(Opcode,nextByte);
+            //Logout request (LOGOUT)
             case 3:
-                Logout logout = new Logout();
                 resetAll();
-                return logout;
-
+                return new Logout();
             // Follow / Unfollow request
             case 4:
-                if (len >= 5) {
-                    if (offSet == -1)
-                        offSet = 5;
 
-                    byte[] numOfusers = new byte[2];
-                    numOfusers[0] = bytes[3];
-                    numOfusers[1] = bytes[4];
-                    int numberOfusers = bytesToShort(numOfusers);
-                    if (nextByte == 0 & counterFollow <= numberOfusers) {
-                        followList.add(popString(offSet, len - 1));
-                        offSet = len + 1;
-                        len++;
-                        counterFollow++;
-                        return null;
-                    }
-                    if (nextByte == 0) {
-                        Follow_UnFollow follow = new Follow_UnFollow(bytes[2] == 1, numberOfusers, followList);
-                        resetAll();
-                        return follow;
-                    }
-
-                    pushByte(nextByte);
-                    len++;
+                if (followcounter < 3) {
+                    opCodeArr[followcounter] = nextByte;
+                    followcounter++;
                     return null;
                 }
-                pushByte(nextByte);
-                len++;
+                if (followcounter == 3){
+                    follow = opCodeArr[0] == 0;
+                    byte[] numberOfUsers = new byte[2];
+                    numberOfUsers[0] = opCodeArr[1];
+                    numberOfUsers[1] = opCodeArr[2];
+                    numOfusers = bytesToShort(numberOfUsers);
+                }
+
+                if (nextByte == '\0'){
+                    pushByte(" ".getBytes()[0]);
+                    Counter++;
+                    if (Counter != numOfusers)
+                        return null;
+                }
+
+                if (Counter == numOfusers) {
+                    String userNameList = new String(bytes, 0, len, StandardCharsets.UTF_8);
+                    len = 0;
+                    String[] splited = userNameList.split("\\s+");
+                    LinkedList<String> usernameList = new LinkedList<>();
+                    for (String name : splited) {
+                        usernameList.add(name);
+                    }
+                    resetAll();
+                    return new Follow_UnFollow(follow, numOfusers, usernameList);
+                }
+                else
+                    pushByte(nextByte);
                 return null;
 
             // Post request (POST)
             case 5:
-                if (nextByte == 20){
-                    post = post+" "+popString(offSet, len);
-                    offSet = len+1;
-                    len++;
-                    return null;
-                }
-                if (nextByte == 0){
-                    String Post = post;
+                if (nextByte == '\0') {
+                    String post = popString();
                     resetAll();
-                    return new Post(Post);
+                    return new Post(post);
                 }
-                pushByte(nextByte);
-                len++;
+                else
+                    pushByte(nextByte);
                 return null;
-
             // PM request (PM)
             case 6:
-                if (nextByte == 0 & offSet == 2) {
-                    followList.add(0,popString(offSet,len-1));
-                    offSet = len+1;
-                    len++;
+                if (nextByte == '\0' & !follow) {
+                    pushByte(" ".getBytes()[0]);
+                    follow = true;
                     return null;
                 }
-                if (nextByte == 20 & offSet != 2) {
-                    post = post + " " + popString(offSet, len - 1);
-                    offSet = len+1;
-                    len++;
-                    return null;
-                }
-                if (nextByte == 0 & offSet != 2) {
-                    PM pm = new PM(followList.get(0), post);
+                if (nextByte == '\0' & follow) {
+                    String[] PM = popString().split("\\s+");
+                    String userName = PM[0];
+                    String content="";
+                    for (int i = 1; i < PM.length ; i++) {
+                        content = content+PM[i]+" ";
+                    }
                     resetAll();
-                    return pm;
+                    return new PM(userName,content);
                 }
                 pushByte(nextByte);
-                len++;
                 return null;
-
             // User list request (USERLIST)
             case 7:
-                UserListRequest listRequest = new UserListRequest();
                 resetAll();
-                return listRequest;
-
+                return  new UserListRequest();
             // Stats request (STAT)
             case 8:
-                if (nextByte == 0) {
-                    StatsRequest statsRequest = new StatsRequest(popString(offSet, len - 1));
+                if (nextByte == '\0'){
+                    String userName = popString();
                     resetAll();
-                    return statsRequest;
+                    return new StatsRequest(userName);
                 }
-                pushByte(nextByte);
-                len++;
+                else
+                    pushByte(nextByte);
                 return null;
-        }
 
+        }
         return "hellow world";
     }
 
-    private String popString(int offset,int len){
+
+    private Object parseLogReg(int opcode,byte nextByte) {
+
+        if (nextByte != '\0') {
+            pushByte(nextByte);
+            return null;
+        } else {
+            Counter++;
+            if (Counter == 2) {
+                String LogReg = popString();
+                String[] splited = LogReg.split("\\s+");
+                resetAll();
+                if (opcode == 1)
+                    return new Register(splited[0], splited[1]);
+                else
+                    return new Login(splited[0], splited[1]);
+
+            }
+            pushByte(" ".getBytes()[0]);
+            return null;
+        }
+    }
+
+    private String popString() {
         //notice that we explicitly requesting that the string will be decoded from UTF-8
         //this is not actually required as it is the default encoding in java.
-        String result = new String(bytes, offset, len, StandardCharsets.UTF_8);
+        String result = new String(bytes, 0, len, StandardCharsets.UTF_8);
+        len = 0;
         return result;
     }
 
     private void resetAll(){
         bytes = new byte[1 << 10];
+        opCodeArr = new byte[3];
         len = 0;
-        offSet = 2;
-        counterFollow = 1;
-        followList = new LinkedList<>();
-        post = "";
+        OpcodeCounter = 0;
+        Counter = 0;
+        Opcode = 0;
+        follow = false;
+        numOfusers = 0;
+        followcounter = 0;
+    }
+    private byte[] shortToBytes(short num) {
+        byte[] bytesArr = new byte[2];
+        bytesArr[0] = (byte)((num >> 8) & 0xFF);
+        bytesArr[1] = (byte)(num & 0xFF);
+        return bytesArr;
     }
 
     public short bytesToShort(byte[] byteArr) {
@@ -176,37 +185,55 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         return result;
     }
 
-
     private void pushByte(byte nextByte) {
         if (len >= bytes.length) {
             bytes = Arrays.copyOf(bytes, len * 2);
         }
-
         bytes[len++] = nextByte;
     }
 
     @Override
     public byte[] encode(Object message) {
+            int Case;
+            if (message instanceof ACK)
+                Case = ((ACK) message).getOpCodeForMessage();
+            else
+                Case = 11;
+        switch (Case){
+            case 4:
+                short ack = 10;
+                String msg = ((ACK) message).getOptional();
+                Vector Bytes = new Vector();
+                byte[] opcodeACK = shortToBytes(ack);
+                byte[] opcodeMSG = shortToBytes(((ACK) message).getOpCodeForMessage());
+                Bytes.addAll(Arrays.asList(opcodeACK));
+                Bytes.addAll(Arrays.asList(opcodeMSG));
+                int indexOfNumber = msg.indexOf('\0');
+                int numberOfUsers = Integer.valueOf(msg.substring(0,indexOfNumber+1));
+                short NumOfusers = (short)numberOfUsers;
+                byte[] numberOfusers = shortToBytes(NumOfusers);
+                Bytes.addAll(Arrays.asList(numberOfusers));
+                byte[] ListOfusers = msg.substring(indexOfNumber+1).getBytes();
+                Bytes.addAll(Arrays.asList(ListOfusers));
+
+                byte[] bytesTosend = new byte[Bytes.size()];
+                for (int i=0; i<Bytes.size();i++){
+                 bytesTosend[i] = (byte)Bytes.remove(0);
+                }
+
+            case 7:
+
+            case 8:
+
+            case 11:
+                default:
+
+        }
+
         return new byte[0];
     }
 
-    private String[] registerLogin(Byte nextByte){
-        String[] nameNpassword = new String[2];
-        if (nextByte == 00 & offSet == 2) {
-            offSet = len;
-            len++;
-            return null;
-        }
-        if (nextByte == 00 & offSet != -1) {
-            nameNpassword[0] = popString(2, offSet -1);
-            nameNpassword[1] = popString(offSet + 1, len);
-            return nameNpassword;
-        }
-        else
-            pushByte(nextByte);
-        len++;
-        return null;
-    }
+
 
 }
 

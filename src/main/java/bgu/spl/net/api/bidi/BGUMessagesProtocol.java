@@ -101,7 +101,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 8));
             else{
                 ACK ack = new ACK((short) 10, (short) 8);
-                String
+
             }
         }
     }

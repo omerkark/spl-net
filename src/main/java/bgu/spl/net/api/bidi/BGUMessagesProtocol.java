@@ -1,11 +1,8 @@
 package bgu.spl.net.api.bidi;
 
 import bgu.spl.net.api.Messages.*;
-import bgu.spl.net.srv.ConnectionHandler;
-import com.sun.xml.internal.bind.v2.TODO;
 
-import java.lang.Error;
-import java.sql.Connection;
+import java.util.List;
 
 public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
@@ -25,34 +22,57 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
         DataBase dataBase= DataBase.getInstance();
 
-
+        //~~~~~~~~~~~~~~~~~~~~~~~~~REGISTER~~~~~~~~~~~~~~~~~~~~~
         if(message instanceof Register){
-            if(dataBase.coantainsClient(id)){
-                ErrorMessage errorMessage = new ErrorMessage((short)11, (short)1);
-                Connection.send(id, errorMessage);
+            String name = ((Register) message).getUserName();
+            String password = ((Register) message).getPassWord();
+            BGUUser bguUser = new BGUUser(name, password);
+            // the user is already registered or there is a user with the same name
+            if(dataBase.containsUser(bguUser.getUserName())){
+                Connection.send(id, new ErrorMessage((short)11, (short)1));
             }
             else {
-                // register a new client.
-                String name = ((Register) message).getUserName();
-                String password = ((Register) message).getPassWord();
-                BGUClient bguClient = new BGUClient(name, password);
-                dataBase.addCustomer(bguClient, id);
-                ACK ack = new ACK((short)10 , (short)1);
-                Connection.send(id, ack);
+                // register a new user.
+                dataBase.addCustomer(bguUser);
+                Connection.send(id, new ACK((short)10 , (short)1));
             }
         }
+        //~~~~~~~~~~~~~~~~~~~~~~~~~LOGIN~~~~~~~~~~~~~~~~~~~~~~~~~
         else if(message instanceof Login){
-            if(!dataBase.coantainsClient(id)){
+            Login login = (Login)message;
+            if(!dataBase.containsUser(login.getUserName()) &&
+                    dataBase.getUser(login.getUserName()).getPassWord() != login.getPassWord() &&
+                    dataBase.isConnected(id, login.getUserName())){
                 ErrorMessage errorMessage = new ErrorMessage((short)11, (short)2);
                 Connection.send(id, errorMessage);
+            }else{
+                dataBase.connectUser(id, login.getUserName());
+                Connection.send(id, new ACK((short)10 , (short)2));
             }
         }
+        //~~~~~~~~~~~~~~~~~~~~~~~LOGOUT~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if(message instanceof Logout){
+            // TODO: IMPLEMENT
 
         }
+        //~~~~~~~~~~~~~~~~~~~~~~~~FOLLOW\UN-FOLLOW~~~~~~~~~~~~~~~
         else if(message instanceof Follow_UnFollow){
+            Follow_UnFollow follow_unFollow = ((Follow_UnFollow)message);
+            if(!dataBase.isConnected(id)){
+                Connection.send(id, new ErrorMessage((short)11, (short)4));
+            }// the client is connected.
+            else{
+                    if(follow_unFollow.isFollow_true_Unfollow_false()){
+                        List<String> succssFollow = dataBase.TryFollow(follow_unFollow.getUserNameList());
+
+                    }
+                    else{
+                        List<String> successUnFollow = dataBase.TryUnFollow(follow_unFollow.getUserNameList());
+                    }
+            }
 
         }
+        //~~~~~~~~~~~~~~~~~~~~~~~~POST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if(message instanceof Post){
 
         }

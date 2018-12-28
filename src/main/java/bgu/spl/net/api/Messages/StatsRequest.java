@@ -2,15 +2,15 @@ package bgu.spl.net.api.Messages;
 
 public class StatsRequest extends Message {
 
-    private String userNameToGetDAataOn;
+    private String userNameToGetDataOn;
 
     public StatsRequest(String userNameToGetDAataOn) {
         super((short)8);
-        this.userNameToGetDAataOn = userNameToGetDAataOn;
+        this.userNameToGetDataOn = userNameToGetDAataOn;
     }
 
-    public String getUserNameToGetDAataOn() {
-        return userNameToGetDAataOn;
+    public String getUserNameToGetDataOn() {
+        return userNameToGetDataOn;
     }
 
 }

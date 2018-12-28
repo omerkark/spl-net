@@ -16,13 +16,13 @@ public class EncoderDecoder implements MessageEncoderDecoder {
     private byte [] opCodeArr = new byte[2];
     private int len = 0;
     int OpcodeCounter = 0;
+    int LoginCounter = 0;
     private short Opcode;
     private int RegisterCounter = 2;
 
 
     @Override
     public Object decodeNextByte(byte nextByte) {
-
 
         if (OpcodeCounter < 2) {
             opCodeArr[OpcodeCounter] = nextByte;
@@ -31,6 +31,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         }
 
         Opcode = bytesToShort(opCodeArr);
+
         switch (Opcode) {
             // register
             case 1:
@@ -49,8 +50,19 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                 }
                 //   Login request (LOGIN)
             case 2:
-
-
+                if(nextByte != '\0') {
+                    pushByte(nextByte);
+                    return null;
+                }
+                else {
+                    LoginCounter--;
+                    if (LoginCounter == 0) {
+                        String Login = popString();
+                        return parseLogin(Login);
+                    }
+                    pushByte(" ".getBytes()[0]);
+                    return null;
+                }
                 //Logout request (LOGOUT)
             case 3:
 
@@ -77,20 +89,30 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
     private Register parseRegister(String s){
         String[] splited = s.split("\\s+");
+        resetAll();
+        RegisterCounter = 2;
         return new Register(splited[0], splited[1]);
     }
 
-        private String popString() {
-            //notice that we explicitly requesting that the string will be decoded from UTF-8
-            //this is not actually required as it is the default encoding in java.
-            String result = new String(bytes, 0, len, StandardCharsets.UTF_8);
-            len = 0;
-            return result;
-        }
+    private Login parseLogin(String s){
+        String[] splited = s.split("\\s+");
+        resetAll();
+        LoginCounter=2;
+        return new Login(splited[0], splited[1]);
+    }
+
+    private String popString() {
+        //notice that we explicitly requesting that the string will be decoded from UTF-8
+        //this is not actually required as it is the default encoding in java.
+        String result = new String(bytes, 0, len, StandardCharsets.UTF_8);
+        len = 0;
+        return result;
+    }
 
     private void resetAll(){
         bytes = new byte[1 << 10];
         len = 0;
+        Opcode =0;
     }
 
     public short bytesToShort(byte[] byteArr) {

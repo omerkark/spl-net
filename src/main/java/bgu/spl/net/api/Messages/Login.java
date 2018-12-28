@@ -11,4 +11,12 @@ public class Login extends Message {
         UserName = userName;
         PassWord = passWord;
     }
+
+    public String getUserName() {
+        return UserName;
+    }
+
+    public String getPassWord() {
+        return PassWord;
+    }
 }

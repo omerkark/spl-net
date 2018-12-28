@@ -14,4 +14,17 @@ public class Follow_UnFollow extends Message  {
         this.numOfUsersToFollow = numOfUsersToFollow;
         UserNameList = userNameList;
     }
+
+    public boolean isFollow_true_Unfollow_false() {
+        return Follow_true_Unfollow_false;
+    }
+
+    public int getNumOfUsersToFollow() {
+        return numOfUsersToFollow;
+    }
+
+    public List<String> getUserNameList() {
+        return UserNameList;
+    }
+
 }

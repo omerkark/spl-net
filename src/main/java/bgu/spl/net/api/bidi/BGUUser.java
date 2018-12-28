@@ -2,6 +2,7 @@ package bgu.spl.net.api.bidi;
 
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BGUUser {
 
@@ -9,6 +10,9 @@ public class BGUUser {
     private List<String> following;
     private String passWord;
     private boolean LogIn = false;
+    private int numOfPosts = 0;
+    private AtomicInteger numberOfFollowers;
+
     //TODO: THINK IF THIS SHOULD BE HERE AND BYTE OR STRING.
     private List<String> FutreMessagesToBeSent;
 
@@ -16,6 +20,7 @@ public class BGUUser {
         this.userName = userName;
         this.passWord = passWord;
         following = new Vector<>();
+        numberOfFollowers = new AtomicInteger();
     }
 
     public String getUserName() {
@@ -31,4 +36,19 @@ public class BGUUser {
     }
 
     public void setLogIn(boolean logIn) { LogIn = logIn; }
+
+    public int usersIAmFollowing(){
+        return following.size();
+    }
+
+    public int getNumOfPosts() {
+        return numOfPosts;
+    }
+
+    public void incrmentNumOfFallowers(){ numberOfFollowers.incrementAndGet(); }
+
+    public void decrmentNumOfFallowers(){ numberOfFollowers.decrementAndGet(); }
+
+    public int usersFollowMe() { return numberOfFollowers.get(); }
+
 }

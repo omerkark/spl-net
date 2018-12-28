@@ -3,7 +3,6 @@ package bgu.spl.net.api.bidi;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataBase {
 
@@ -82,6 +81,8 @@ public class DataBase {
 				//checks if the person i want to follow is registered to the system
 				if(users.containsKey(userToFollow)){
 					bguUser.getFollowing().add(userToFollow);
+					// add a follower to the user i started following
+					getUser(userToFollow).incrmentNumOfFallowers();
 					sucssesFollowers.add(userToFollow);
 				}
 			}
@@ -97,6 +98,8 @@ public class DataBase {
 			// check if we are already following the user we want to unFollow.
 			if(bguUser.getFollowing().contains(userToUnFollow)){
 				bguUser.getFollowing().remove(userToUnFollow);
+				// substract one from the followers of the user i just unfollowed
+				getUser(userToUnFollow).decrmentNumOfFallowers();
 				sucssesUnFollowers.add(userToUnFollow);
 			}
 		}
@@ -109,5 +112,8 @@ public class DataBase {
 		for(String s: listToString){
 			str += "\0" + s;
 		}
+		str += "\0";
+		return str;
 	}
+
 }

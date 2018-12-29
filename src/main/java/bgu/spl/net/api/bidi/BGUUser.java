@@ -71,4 +71,6 @@ public class BGUUser {
     public void addToFuterMessage(Notification notification){
         this.FutreMessagesToBeSent.add(notification);
     }
+
+    public List<String> getMyfollowers(){return Myfollowers;}
 }

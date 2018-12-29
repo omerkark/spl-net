@@ -85,9 +85,25 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 5));
             else{
                     String content = post.getContent();
-
+                    String [] arr = content.split("@");
+                    Vector<String> userNames = new Vector<String>();
+                    for(String s: arr){
+                        String [] temp = s.split(" ");
+                        userNames.add(temp[0]);
+                    }
+                    // taking care of @<userName>
+                    for(String user: userNames){
+                        // check if this user is registered to the system send him the post.
+                        if(dataBase.containsUser(user)){
+                            sendNotification(ProtocolUserName, '1', content);
+                        }
+                    }
+                    // send to all my followers
+                    BGUUser bguUser = dataBase.getUser(ProtocolUserName);
+                    for(String userName: bguUser.getMyfollowers()){
+                        sendNotification(ProtocolUserName,'1',content);
+                    }
                 }
-
             }
         //~~~~~~~~~~~~~~~~~~~~~~PM~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof PM) {
@@ -121,8 +137,8 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             else {
                 ACK ack = new ACK((short) 10, (short) 8);
                 BGUUser bguUser = dataBase.getUser(statsrequest.getUserNameToGetDataOn());
-                String str = "" + bguUser.getNumOfPosts() + "\0" + bguUser.getNumOfFollowers()
-                        + "\0" + bguUser.getNumUsersIAmFollowing() + "\0";
+                String str = "" + bguUser.getNumOfPosts() + " " + bguUser.getNumOfFollowers()
+                        + " " + bguUser.getNumUsersIAmFollowing() + " ";
                 ack.setOptional(str);
                 Connection.send(id, ack);
                 }
@@ -132,10 +148,10 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         public void sendNotification (String userName, char pm_post, String content){
             Notification notification = new Notification(pm_post, userName, content);
             int IdConnectionToSendTo = dataBase.isConnected(userName);
-            // the user I want to send to is connected
+            // the user I want to send to is connected - send NOW
             if(IdConnectionToSendTo!= -1){
                 Connection.send(IdConnectionToSendTo, notification);
-            }// not connected i will save in his messages To send.
+            }// not connected i will save in his messages To send Queue.
             else{
                 BGUUser bguUser = dataBase.getUser(userName);
                 bguUser.addToFuterMessage(notification);

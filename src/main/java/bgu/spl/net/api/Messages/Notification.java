@@ -8,7 +8,10 @@ public class Notification extends Message {
     private String PostingUserName;
     private String Content;
 
-    public Notification() {
+    public Notification(char pm_post, String postingUserName, String content) {
         super((short)9);
+        this.Content = content;
+        this.PM_Post = pm_post;
+        this.PostingUserName = postingUserName;
     }
 }

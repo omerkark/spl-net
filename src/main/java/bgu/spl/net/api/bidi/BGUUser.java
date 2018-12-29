@@ -1,7 +1,11 @@
 package bgu.spl.net.api.bidi;
 
+import bgu.spl.net.api.Messages.Notification;
+
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BGUUser {
@@ -12,15 +16,14 @@ public class BGUUser {
     private String passWord;
     private boolean LogIn = false;
     private int numOfPosts = 0;
-
-    //TODO: THINK IF THIS SHOULD BE HERE AND BYTE OR STRING.
-    private List<String> FutreMessagesToBeSent;
+    private BlockingQueue<Notification> FutreMessagesToBeSent;
 
     public BGUUser(String userName, String passWord) {
         this.userName = userName;
         this.passWord = passWord;
         IAmfollowing = new Vector<>();
         Myfollowers = new Vector<>();
+        FutreMessagesToBeSent = new LinkedBlockingDeque<>();
     }
 
     public String getUserName() {
@@ -63,5 +66,9 @@ public class BGUUser {
 
     public void removeFollower(String userName){
         Myfollowers.remove(userName);
+    }
+
+    public void addToFuterMessage(Notification notification){
+        this.FutreMessagesToBeSent.add(notification);
     }
 }

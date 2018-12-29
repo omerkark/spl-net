@@ -96,10 +96,10 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 6));
             else{
                 Connection.send(id, new ACK((short) 10, (short) 6));
-
-
+                sendNotification(pm.getUserNameToSendTo(), '0', pm.getContent());
+                // add to all post saved in the dataBase
+                dataBase.addPostPm(pm.getContent());
             }
-
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~USER-LIST~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof UserListRequest) {
@@ -129,11 +129,16 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             }
         }
 
-        public void sendNotification (String userName){
+        public void sendNotification (String userName, char pm_post, String content){
+            Notification notification = new Notification(pm_post, userName, content);
             int IdConnectionToSendTo = dataBase.isConnected(userName);
             // the user I want to send to is connected
             if(IdConnectionToSendTo!= -1){
-
+                Connection.send(IdConnectionToSendTo, notification);
+            }// not connected i will save in his messages To send.
+            else{
+                BGUUser bguUser = dataBase.getUser(userName);
+                bguUser.addToFuterMessage(notification);
             }
         }
 

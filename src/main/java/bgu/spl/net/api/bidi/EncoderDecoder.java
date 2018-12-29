@@ -18,7 +18,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
     private int followcounter = 0;
 
 
-
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Decoder~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     @Override
     public Object decodeNextByte(byte nextByte)  {
 
@@ -190,7 +190,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         }
         bytes[len++] = nextByte;
     }
-
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Encoder~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     @Override
     public byte[] encode(Object message) {
         int Case;

@@ -2,7 +2,10 @@ package bgu.spl.net.api.bidi;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Queue;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class DataBase {
 
@@ -16,8 +19,9 @@ public class DataBase {
 	// all users how registered to the system.
 	private HashMap<String, BGUUser> users;
     // hash map between an id and a client for users conncted to the system.
-    private HashMap<Integer, String> iDToCustomer;
+    private HashMap<String, Integer> iDToCustomer;
     private List<String> listRegistrationOrder;
+    private List<String> postsPm;
 
 	public static DataBase getInstance() {
 		return SingletonDataBase.DateBaseInstance;
@@ -27,6 +31,7 @@ public class DataBase {
 	    users = new HashMap<>();
 	    iDToCustomer = new HashMap<>();
 	    listRegistrationOrder = new Vector<>();
+	    postsPm = new Vector<>();
 	}
 
 	public void addCustomer(BGUUser bguUser){
@@ -57,50 +62,52 @@ public class DataBase {
 
 	// checks if a user is already connected from this client or a diffrent client
 	// maybe we can remove thr id check
-    public boolean isConnected(int id, String name){
-		return iDToCustomer.containsKey(id) & iDToCustomer.containsValue(name);
-	}
-
-	public boolean isConnected(int id){
-		return iDToCustomer.containsKey(id);
+    public int isConnected(String name){
+		if (iDToCustomer.containsKey(name))
+		    return iDToCustomer.get(name);
+		return -1;
 	}
 
 	public void connectUser(int id, String bguUser){
-		iDToCustomer.put(id , bguUser);
+		iDToCustomer.put(bguUser ,id);
 		// change the status of the customer to true
 		getUser(bguUser).setLogIn(true);
 	}
 
-	public List<String> TryFollow(List<String> userNamesToFollow, int id){
-		BGUUser bguUser = getUser(iDToCustomer.get(id));
+	public List<String> TryFollow(List<String> userNamesToFollow, String UserName){
+		BGUUser bguUser = getUser(UserName);
 		List<String> sucssesFollowers = new Vector<>();
 		// go over the potential users to follow
-		for(String userToFollow: userNamesToFollow){
-			// check if i am already folloing after them
-			if(!bguUser.getFollowing().contains(userToFollow)){
+		for(String userToFollowName: userNamesToFollow){
+			// check if i am already following after them
+			if(!bguUser.getIAmfollowing().contains(userToFollowName)){
 				//checks if the person i want to follow is registered to the system
-				if(users.containsKey(userToFollow)){
-					bguUser.getFollowing().add(userToFollow);
+				if(users.containsKey(userToFollowName)){
+					BGUUser userToFollow = getUser(userToFollowName);
+					//add some one to my following list
+					bguUser.startFollowing(userToFollowName);
 					// add a follower to the user i started following
-					getUser(userToFollow).incrmentNumOfFallowers();
-					sucssesFollowers.add(userToFollow);
+					userToFollow.addFollower(bguUser.getUserName());
+					sucssesFollowers.add(userToFollowName);
 				}
 			}
 		}
 		return sucssesFollowers;
 	}
 
-	public List<String> TryUnFollow(List<String> userNamesToUnFollow, int id){
-		BGUUser bguUser = getUser(iDToCustomer.get(id));
+	public List<String> TryUnFollow(List<String> userNamesToUnFollow, String UserName){
+		BGUUser bguUser = getUser(UserName);
 		List<String> sucssesUnFollowers = new Vector<>();
 		// go go over the potential users to Unfollow
-		for(String userToUnFollow: userNamesToUnFollow){
+		for(String userToUnFollowName: userNamesToUnFollow){
 			// check if we are already following the user we want to unFollow.
-			if(bguUser.getFollowing().contains(userToUnFollow)){
-				bguUser.getFollowing().remove(userToUnFollow);
-				// substract one from the followers of the user i just unfollowed
-				getUser(userToUnFollow).decrmentNumOfFallowers();
-				sucssesUnFollowers.add(userToUnFollow);
+			if(bguUser.getIAmfollowing().contains(userToUnFollowName)){
+				BGUUser userToUnFollow = getUser(userToUnFollowName);
+				// remove the user from the user i am following
+				bguUser.removeIAmFollowing(userToUnFollowName);
+				//remove me from that user followers.
+				userToUnFollow.removeFollower(bguUser.getUserName());
+				sucssesUnFollowers.add(userToUnFollowName);
 			}
 		}
 		return sucssesUnFollowers;
@@ -115,5 +122,10 @@ public class DataBase {
 		str += "\0";
 		return str;
 	}
+
+	public void addPostPm (String content){
+	    postsPm.add(content);
+    }
+
 
 }

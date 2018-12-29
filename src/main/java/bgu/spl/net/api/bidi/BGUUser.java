@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BGUUser {
 
     private String userName;
-    private List<String> following;
+    private List<String> IAmfollowing;
+    private List<String> Myfollowers;
     private String passWord;
     private boolean LogIn = false;
     private int numOfPosts = 0;
-    private AtomicInteger numberOfFollowers;
 
     //TODO: THINK IF THIS SHOULD BE HERE AND BYTE OR STRING.
     private List<String> FutreMessagesToBeSent;
@@ -19,16 +19,16 @@ public class BGUUser {
     public BGUUser(String userName, String passWord) {
         this.userName = userName;
         this.passWord = passWord;
-        following = new Vector<>();
-        numberOfFollowers = new AtomicInteger();
+        IAmfollowing = new Vector<>();
+        Myfollowers = new Vector<>();
     }
 
     public String getUserName() {
         return userName;
     }
 
-    public List<String> getFollowing() {
-        return following;
+    public List<String> getIAmfollowing() {
+        return IAmfollowing;
     }
 
     public String getPassWord() {
@@ -37,18 +37,31 @@ public class BGUUser {
 
     public void setLogIn(boolean logIn) { LogIn = logIn; }
 
-    public int usersIAmFollowing(){
-        return following.size();
+    public int getNumUsersIAmFollowing(){
+        return IAmfollowing.size();
     }
 
     public int getNumOfPosts() {
         return numOfPosts;
     }
 
-    public void incrmentNumOfFallowers(){ numberOfFollowers.incrementAndGet(); }
+    public void addFollower(String name){
+        this.Myfollowers.add(name);
+    }
 
-    public void decrmentNumOfFallowers(){ numberOfFollowers.decrementAndGet(); }
+    public int getNumOfFollowers(){
+        return Myfollowers.size();
+    }
 
-    public int usersFollowMe() { return numberOfFollowers.get(); }
+    public void startFollowing(String userName){
+        this.IAmfollowing.add(userName);
+    }
 
+    public void removeIAmFollowing(String userName){
+        IAmfollowing.remove(userName);
+    }
+
+    public void removeFollower(String userName){
+        Myfollowers.remove(userName);
+    }
 }

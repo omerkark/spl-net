@@ -4,7 +4,6 @@ import bgu.spl.net.api.Messages.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Vector;
 
 public class EncoderDecoder implements MessageEncoderDecoder {
 
@@ -34,17 +33,17 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         }
 
         switch (Opcode) {
-            // register
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Register~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 1:
                 return parseLogReg(Opcode,nextByte);
-            //   Login request (LOGIN)
+            //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Login request (LOGIN)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 2:
                 return parseLogReg(Opcode,nextByte);
-            //Logout request (LOGOUT)
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Logout request (LOGOUT)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 3:
                 resetAll();
                 return new Logout();
-            // Follow / Unfollow request
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Follow / Unfollow request~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 4:
 
                 if (followcounter < 3) {
@@ -82,7 +81,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                     pushByte(nextByte);
                 return null;
 
-            // Post request (POST)
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Post request (POST)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 5:
                 if (nextByte == '\0') {
                     String post = popString();
@@ -92,7 +91,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                 else
                     pushByte(nextByte);
                 return null;
-            // PM request (PM)
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PM request (PM)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 6:
                 if (nextByte == '\0' & !follow) {
                     pushByte(" ".getBytes()[0]);
@@ -111,11 +110,11 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                 }
                 pushByte(nextByte);
                 return null;
-            // User list request (USERLIST)
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~User list request (USERLIST)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 7:
                 resetAll();
                 return  new UserListRequest();
-            // Stats request (STAT)
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Stats request (STAT)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 8:
                 if (nextByte == '\0'){
                     String userName = popString();
@@ -200,20 +199,37 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         else
             Case = 11;
         switch (Case) {
-
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ACK Follow Unfollow~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 4:
                 return encodeACK((ACK) message);
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ACK User list ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 7:
                 return encodeACK((ACK) message);
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ACK Stat~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 8:
                 return encodeACK((ACK) message);
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Notification Msg ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            case 9:
+                byte [] Content = ((Notification) message).getContent().getBytes();
+                byte [] Notification = new byte[3+ Content.length];
+                Character PM_Post = ((Notification) message).getPM_Post();
+                Notification[0] = shortToBytes(((Notification) message).getOpcode())[0];
+                Notification[1] = shortToBytes(((Notification) message).getOpcode())[1];
+                Notification[2] = PM_Post.toString().getBytes()[0];
+                for (int i = 0; i <Content.length ; i++) {
+                    Notification[i+3]=Content[i];
+                }
+
+
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Error MSG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 11:
                 return encodeDefault((Message) message);
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ACK rest of cases ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             default:
                 return encodeDefault((Message) message);
         }
     }
-    // encoding cases 7 and 8,
+    // encoding cases 7,8 and 9.
    private  byte[] encodeACK(ACK message){
        short ack = 10;
        String msg = ((ACK) message).getOptional();

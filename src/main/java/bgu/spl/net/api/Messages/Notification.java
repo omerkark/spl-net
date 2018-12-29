@@ -12,4 +12,16 @@ public class Notification extends Message {
         this.PM_Post = pm_post;
         this.PostingUserName = postingUserName;
     }
+
+    public char getPM_Post() {
+        return PM_Post;
+    }
+
+    public String getPostingUserName() {
+        return PostingUserName;
+    }
+
+    public String getContent() {
+        return Content;
+    }
 }

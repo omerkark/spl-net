@@ -4,6 +4,7 @@ import bgu.spl.net.api.Messages.*;
 
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
@@ -46,16 +47,31 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                     dataBase.getUser(login.getUserName()).getPassWord() != login.getPassWord() ||
                     ProtocolLogin == true) {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 2));
-            } else {
+            }
+            else {
                 dataBase.connectUser(id, login.getUserName());
                 ProtocolLogin = true;
                 ProtocolUserName = login.getUserName();
                 Connection.send(id, new ACK((short) 10, (short) 2));
+                //check if he has future messages and send them.
+                ConcurrentLinkedQueue<Notification> futureMessages = dataBase.getUser(ProtocolUserName).getFutreMessagesToBeSent();
+                while (futureMessages.size() > 0)
+                    Connection.send(id, futureMessages.poll());
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~LOGOUT~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof Logout) {
-            // TODO: IMPLEMENT
+            Logout logout = (Logout)message;
+            if(ProtocolLogin){
+                Connection.send(id, new ErrorMessage((short) 11, (short) 3));
+            }
+            else{
+                Connection.send(id, new ACK((short)10, (short)3));
+                ProtocolLogin = false;
+                ProtocolUserName = null;
+                Connection.disconnect(id);
+
+            }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~FOLLOW\UN-FOLLOW~~~~~~~~~~~~~~~
         else if (message instanceof Follow_UnFollow) {
@@ -64,7 +80,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 4));
             }// the client is connected.
             else {
-                List<String> successFollow_UnFollow = new Vector<>();
+                List<String> successFollow_UnFollow;
                 if (follow_unFollow.isFollow_true_Unfollow_false())
                     successFollow_UnFollow = dataBase.TryFollow(follow_unFollow.getUserNameList(), ProtocolUserName);
                 successFollow_UnFollow = dataBase.TryUnFollow(follow_unFollow.getUserNameList(), ProtocolUserName);
@@ -128,7 +144,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, ack);
             }
         }
-            //~~~~~~~~~~~~~~~~~~~~~~~STATS-REQUEST~~~~~~~~~~~~~~~~~~~~~~~~~
+        //~~~~~~~~~~~~~~~~~~~~~~~STATS-REQUEST~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof StatsRequest) {
             StatsRequest statsrequest = (StatsRequest) message;
             // if the user name we want to get data on did not register
@@ -144,6 +160,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 }
             }
         }
+
 
         public void sendNotification (String userName, char pm_post, String content){
             Notification notification = new Notification(pm_post, userName, content);

@@ -5,6 +5,7 @@ import bgu.spl.net.api.Messages.Notification;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,14 +17,14 @@ public class BGUUser {
     private String passWord;
     private boolean LogIn = false;
     private int numOfPosts = 0;
-    private BlockingQueue<Notification> FutreMessagesToBeSent;
+    private ConcurrentLinkedQueue<Notification> FutreMessagesToBeSent;
 
     public BGUUser(String userName, String passWord) {
         this.userName = userName;
         this.passWord = passWord;
         IAmfollowing = new Vector<>();
         Myfollowers = new Vector<>();
-        FutreMessagesToBeSent = new LinkedBlockingDeque<>();
+        FutreMessagesToBeSent = new ConcurrentLinkedQueue<>();
     }
 
     public String getUserName() {
@@ -73,4 +74,8 @@ public class BGUUser {
     }
 
     public List<String> getMyfollowers(){return Myfollowers;}
+
+    public ConcurrentLinkedQueue<Notification> getFutreMessagesToBeSent() {
+        return FutreMessagesToBeSent;
+    }
 }

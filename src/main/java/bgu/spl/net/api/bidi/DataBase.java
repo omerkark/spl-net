@@ -14,8 +14,6 @@ public class DataBase {
 		private static DataBase DateBaseInstance = new DataBase();
 	}
 
-	// fields
-
 	// all users how registered to the system.
 	private HashMap<String, BGUUser> users;
     // hash map between an id and a client for users conncted to the system.

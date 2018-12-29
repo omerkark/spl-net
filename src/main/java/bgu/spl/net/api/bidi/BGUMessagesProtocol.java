@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
-    private short opcode;
     private Connections <Message> Connection;
     private int id;
     private DataBase dataBase;
@@ -23,7 +22,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
     @Override
     public void process(Message message) {
-
+        // TODO: were do we intelize?
         DataBase dataBase = DataBase.getInstance();
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~REGISTER~~~~~~~~~~~~~~~~~~~~~
@@ -111,14 +110,18 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                     for(String user: userNames){
                         // check if this user is registered to the system send him the post.
                         if(dataBase.containsUser(user)){
-                            sendNotification(ProtocolUserName, '1', content);
+                            sendNotification(ProtocolUserName, '1', content, user);
                         }
                     }
                     // send to all my followers
                     BGUUser bguUser = dataBase.getUser(ProtocolUserName);
                     for(String userName: bguUser.getMyfollowers()){
-                        sendNotification(ProtocolUserName,'1',content);
+                        sendNotification(ProtocolUserName,'1',content, userName);
                     }
+                // add to all post saved in the dataBase
+                dataBase.addPostPm(content);
+                // increment user num of posts
+                dataBase.getUser(ProtocolUserName).incrementNumOfPM_POST();
                 }
             }
         //~~~~~~~~~~~~~~~~~~~~~~PM~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,9 +131,10 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 6));
             else{
                 Connection.send(id, new ACK((short) 10, (short) 6));
-                sendNotification(pm.getUserNameToSendTo(), '0', pm.getContent());
+                sendNotification(ProtocolUserName, '0', pm.getContent(), pm.getUserNameToSendTo());
                 // add to all post saved in the dataBase
                 dataBase.addPostPm(pm.getContent());
+                dataBase.getUser(ProtocolUserName).incrementNumOfPM_POST();
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~USER-LIST~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,15 +166,15 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         }
 
 
-        public void sendNotification (String userName, char pm_post, String content){
+        public void sendNotification (String userName, char pm_post, String content, String userToSendTo){
             Notification notification = new Notification(pm_post, userName, content);
-            int IdConnectionToSendTo = dataBase.isConnected(userName);
+            int IdConnectionToSendTo = dataBase.isConnected(userToSendTo);
             // the user I want to send to is connected - send NOW
             if(IdConnectionToSendTo!= -1){
                 Connection.send(IdConnectionToSendTo, notification);
             }// not connected i will save in his messages To send Queue.
             else{
-                BGUUser bguUser = dataBase.getUser(userName);
+                BGUUser bguUser = dataBase.getUser(userToSendTo);
                 bguUser.addToFuterMessage(notification);
             }
         }

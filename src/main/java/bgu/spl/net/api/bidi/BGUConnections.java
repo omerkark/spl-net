@@ -42,10 +42,9 @@ public class BGUConnections<T> implements Connections<T> {
         }
     }
 
-    public void connect(ConnectionHandler toConnect){
-        if(!connectionHandler.contains(toConnect)){
-            // add to the hash map the connection handler
-        }
+    public void connect(ConnectionHandler toConnect, int id){
+            connectionHandler.putIfAbsent(id, toConnect);
+
     }
 
     public ConnectionHandler getConectionHandler(int id){

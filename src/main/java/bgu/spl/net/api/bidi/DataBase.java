@@ -2,13 +2,9 @@ package bgu.spl.net.api.bidi;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Queue;
 import java.util.Vector;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class DataBase {
-
 
     private static class SingletonDataBase {
 		private static DataBase DateBaseInstance = new DataBase();
@@ -18,6 +14,7 @@ public class DataBase {
 	private HashMap<String, BGUUser> users;
     // hash map between an id and a client for users conncted to the system.
     private HashMap<String, Integer> iDToCustomer;
+    // all users how wver registered.
     private List<String> listRegistrationOrder;
     private List<String> postsPm;
 

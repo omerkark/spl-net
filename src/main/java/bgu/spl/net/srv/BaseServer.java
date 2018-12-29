@@ -39,6 +39,7 @@ public abstract class BaseServer<T> implements Server<T> {
 
             this.sock = serverSock; //just to be able to close
 
+            // TODO: STARR CONECTIONS.
             while (!Thread.currentThread().isInterrupted()) {
 
                 Socket clientSock = serverSock.accept();
@@ -46,10 +47,11 @@ public abstract class BaseServer<T> implements Server<T> {
                 BlockingConnectionHandler<T> handler = new BlockingConnectionHandler<>(
                         clientSock,
                         encdecFactory.get(),
-                        protocolFactory.get(), connectionId);
+                        protocolFactory.get(),
+                        connectionId);
                 // increase ID for the next Connection;
+                bguConnections.connect(handler, connectionId);
                 connectionId++;
-                bguConnections.connect(handler);
                 execute(handler);
             }
         } catch (IOException ex) {

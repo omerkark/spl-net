@@ -78,4 +78,6 @@ public class BGUUser {
     public ConcurrentLinkedQueue<Notification> getFutreMessagesToBeSent() {
         return FutreMessagesToBeSent;
     }
+
+    public void incrementNumOfPM_POST(){numOfPosts++;}
 }

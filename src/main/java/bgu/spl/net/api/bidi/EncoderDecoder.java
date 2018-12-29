@@ -194,46 +194,77 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
     @Override
     public byte[] encode(Object message) {
-            int Case;
-            if (message instanceof ACK)
-                Case = ((ACK) message).getOpCodeForMessage();
-            else
-                Case = 11;
-        switch (Case){
+        int Case;
+        if (message instanceof ACK)
+            Case = ((ACK) message).getOpCodeForMessage();
+        else
+            Case = 11;
+        switch (Case) {
+
             case 4:
-                short ack = 10;
-                String msg = ((ACK) message).getOptional();
-                Vector Bytes = new Vector();
-                byte[] opcodeACK = shortToBytes(ack);
-                byte[] opcodeMSG = shortToBytes(((ACK) message).getOpCodeForMessage());
-                Bytes.addAll(Arrays.asList(opcodeACK));
-                Bytes.addAll(Arrays.asList(opcodeMSG));
-                int indexOfNumber = msg.indexOf('\0');
-                int numberOfUsers = Integer.valueOf(msg.substring(0,indexOfNumber+1));
-                short NumOfusers = (short)numberOfUsers;
-                byte[] numberOfusers = shortToBytes(NumOfusers);
-                Bytes.addAll(Arrays.asList(numberOfusers));
-                byte[] ListOfusers = msg.substring(indexOfNumber+1).getBytes();
-                Bytes.addAll(Arrays.asList(ListOfusers));
-
-                byte[] bytesTosend = new byte[Bytes.size()];
-                for (int i=0; i<Bytes.size();i++){
-                 bytesTosend[i] = (byte)Bytes.remove(0);
-                }
-
+                return encodeACK((ACK) message);
             case 7:
-
+                return encodeACK((ACK) message);
             case 8:
-
+                return encodeACK((ACK) message);
             case 11:
-                default:
-
+                return encodeDefault((Message) message);
+            default:
+                return encodeDefault((Message) message);
         }
-
-        return new byte[0];
     }
+    // encoding cases 7 and 8,
+   private  byte[] encodeACK(ACK message){
+       short ack = 10;
+       String msg = ((ACK) message).getOptional();
+       byte[] users = msg.getBytes();
+       byte[] Bytes = new byte[users.length+4];
+       if (((ACK)message).getOpCodeForMessage()==8)
+           Bytes = new byte [10];
+       Bytes[0]=shortToBytes(ack)[0];
+       Bytes[1]=shortToBytes(ack)[1];
+       Bytes[2]=(shortToBytes(((ACK) message).getOpCodeForMessage()))[0];
+       Bytes[3]=(shortToBytes(((ACK) message).getOpCodeForMessage()))[1];
+       if (((ACK)message).getOpCodeForMessage()==8){
+           String[] postFollow = ((ACK)message).getOptional().split("\\s+");
+           Bytes[4] = shortToBytes(Short.valueOf(postFollow[0]))[0];
+           Bytes[5] = shortToBytes(Short.valueOf(postFollow[0]))[1];
+           Bytes[6] = shortToBytes(Short.valueOf(postFollow[1]))[0];
+           Bytes[7] = shortToBytes(Short.valueOf(postFollow[1]))[1];
+           Bytes[8] = shortToBytes(Short.valueOf(postFollow[2]))[0];
+           Bytes[9] = shortToBytes(Short.valueOf(postFollow[2]))[1];
+       }
+       else{
+       int indexOfNumber = msg.indexOf('\0');
+       Bytes[4]= shortToBytes(Short.valueOf(msg.substring(0,indexOfNumber)))[0];
+       Bytes[5]=shortToBytes(Short.valueOf(msg.substring(0,indexOfNumber)))[1];
 
+       for (int i=2; i<users.length;i++) {
+           Bytes[i + 4] = users[i];
+        }
+       }
+       return Bytes;
+   }
+    private  byte[] encodeDefault(Message message){
+        short OP;
+        byte[] Msg = new byte[4];
 
-
+        if (message instanceof ErrorMessage) {
+            OP=11;
+            Msg[0] = shortToBytes(OP)[0];
+            Msg[1] = shortToBytes(OP)[1];
+            Msg[2] = shortToBytes(((ErrorMessage) message).getOpCodeForMessage())[0];
+            Msg[3] = shortToBytes(((ErrorMessage) message).getOpCodeForMessage())[1];
+            return Msg;
+        }
+        else{
+            OP = 10;
+            Msg[0] = shortToBytes(OP)[0];
+            Msg[1] = shortToBytes(OP)[1];
+            Msg[2] = shortToBytes(((ACK) message).getOpCodeForMessage())[0];
+            Msg[3] = shortToBytes(((ACK) message).getOpCodeForMessage())[1];
+            return Msg;
+        }
+    }
 }
 

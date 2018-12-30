@@ -129,7 +129,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         return "hellow world";
     }
 
-   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Assist Function~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Assistance Functions~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     private Object parseLogReg(int opcode,byte nextByte) {
 
         if (nextByte != '\0') {

@@ -42,7 +42,7 @@ public class BGUConnections<T> implements Connections<T> {
         }
     }
 
-    public void connect(ConnectionHandler toConnect, int id){
+    public void addConnection(ConnectionHandler toConnect, int id){
             connectionHandler.putIfAbsent(id, toConnect);
 
     }

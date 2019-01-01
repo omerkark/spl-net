@@ -14,6 +14,10 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
     private boolean ProtocolLogin = false;
     private String ProtocolUserName = null;
 
+    public BGUMessagesProtocol(DataBase dataBase) {
+        this.dataBase = dataBase;
+    }
+
     @Override
     public void start(int connectionId, Connections<Message> connections) {
         Connection  = connections;
@@ -22,8 +26,6 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
 
     @Override
     public void process(Message message) {
-        // TODO: were do we intelize?
-        DataBase dataBase = DataBase.getInstance();
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~REGISTER~~~~~~~~~~~~~~~~~~~~~
         if (message instanceof Register) {

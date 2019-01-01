@@ -1,9 +1,8 @@
 package bgu.spl.net.srv;
-
 import bgu.spl.net.api.MessageEncoderDecoder;
-import bgu.spl.net.api.MessagingProtocol;
 import bgu.spl.net.api.bidi.BGUConnections;
-import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.api.bidi.BidiMessagingProtocol;
+
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -13,14 +12,14 @@ import java.util.function.Supplier;
 public abstract class BaseServer<T> implements Server<T> {
 
     private final int port;
-    private final Supplier<MessagingProtocol<T>> protocolFactory;
+    private final Supplier<BidiMessagingProtocol<T>> protocolFactory;
     private final Supplier<MessageEncoderDecoder<T>> encdecFactory;
     private ServerSocket sock;
     private int connectionId = 0;
 
     public BaseServer(
             int port,
-            Supplier<MessagingProtocol<T>> protocolFactory,
+            Supplier<BidiMessagingProtocol<T>> protocolFactory,
             Supplier<MessageEncoderDecoder<T>> encdecFactory) {
 
         this.port = port;
@@ -39,10 +38,10 @@ public abstract class BaseServer<T> implements Server<T> {
 
             this.sock = serverSock; //just to be able to close
 
-            // TODO: STARR CONECTIONS.
             while (!Thread.currentThread().isInterrupted()) {
 
                 Socket clientSock = serverSock.accept();
+                System.out.println("connected");
 
                 BlockingConnectionHandler<T> handler = new BlockingConnectionHandler<>(
                         clientSock,
@@ -50,7 +49,8 @@ public abstract class BaseServer<T> implements Server<T> {
                         protocolFactory.get(),
                         connectionId);
                 // increase ID for the next Connection;
-                bguConnections.connect(handler, connectionId);
+                bguConnections.addConnection(handler, connectionId);
+                handler.getProtocol().start(connectionId, bguConnections);
                 connectionId++;
                 execute(handler);
             }

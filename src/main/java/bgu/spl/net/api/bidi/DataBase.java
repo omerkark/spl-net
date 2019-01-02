@@ -38,7 +38,7 @@ public class DataBase {
     // check if the user is already registered to the sys by user name.
     public boolean containsUser(String bguUserName){
 	    for(String userName: users.keySet()){
-	    	if(userName == bguUserName)
+	    	if(userName.equals(bguUserName))
 	    		return true;
 		}
 	    return false;

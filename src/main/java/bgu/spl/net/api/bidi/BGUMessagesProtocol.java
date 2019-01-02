@@ -45,7 +45,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         else if (message instanceof Login) {
             Login login = (Login) message;
             if (!dataBase.containsUser(login.getUserName()) ||
-                    dataBase.getUser(login.getUserName()).getPassWord() != login.getPassWord() ||
+                    !dataBase.getUser(login.getUserName()).getPassWord().equals(login.getPassWord()) ||
                     ProtocolLogin == true) {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 2));
             }

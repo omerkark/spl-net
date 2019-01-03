@@ -12,7 +12,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
     private int len = 0;
     private int OpcodeCounter = 0;
     private int Counter = 0;
-    private short Opcode;
+    private short Opcode = -1;
     private boolean follow = false;
     private int numOfusers;
     private int followcounter = 0;
@@ -25,12 +25,22 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         if (OpcodeCounter < 2) {
             opCodeArr[OpcodeCounter] = nextByte;
             OpcodeCounter++;
+            if(OpcodeCounter == 2){
+                    Opcode = bytesToShort(opCodeArr);
+                    OpcodeCounter++;
+                }
+            if(Opcode == 3) {
+                resetAll();
+                return new Logout();
+            }
+
+            if(Opcode == 7){
+                resetAll();
+                return  new UserListRequest();
+            }
             return null;
-        }
-        if (OpcodeCounter == 2){
-            Opcode = bytesToShort(opCodeArr);
-            OpcodeCounter++;
-        }
+       }
+
 
         switch (Opcode) {
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Register~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,9 +50,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
             case 2:
                 return parseLogReg(Opcode,nextByte);
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Logout request (LOGOUT)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            case 3:
-                resetAll();
-                return new Logout();
+
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Follow / Unfollow request~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 4:
 
@@ -52,7 +60,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                     return null;
                 }
                 if (followcounter == 3){
-                    follow = opCodeArr[0] == 0;
+                    follow = (opCodeArr[0] == 0);
                     byte[] numberOfUsers = new byte[2];
                     numberOfUsers[0] = opCodeArr[1];
                     numberOfUsers[1] = opCodeArr[2];
@@ -74,8 +82,10 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                     for (String name : splited) {
                         usernameList.add(name);
                     }
+                    boolean follow = this.follow;
+                    int numberOfusers = numOfusers;
                     resetAll();
-                    return new Follow_UnFollow(follow, numOfusers, usernameList);
+                    return new Follow_UnFollow(follow, numberOfusers, usernameList);
                 }
                 else
                     pushByte(nextByte);
@@ -110,10 +120,8 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                 }
                 pushByte(nextByte);
                 return null;
-            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~User list request (USERLIST)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            case 7:
-                resetAll();
-                return  new UserListRequest();
+
+
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Stats request (STAT)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 8:
                 if (nextByte == '\0'){
@@ -166,7 +174,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         len = 0;
         OpcodeCounter = 0;
         Counter = 0;
-        Opcode = 0;
+        Opcode = -1;
         follow = false;
         numOfusers = 0;
         followcounter = 0;
@@ -197,7 +205,11 @@ public class EncoderDecoder implements MessageEncoderDecoder {
         if (message instanceof ACK)
             Case = ((ACK) message).getOpCodeForMessage();
         else
+        if (message instanceof Notification)
+            Case = 9;
+        else
             Case = 11;
+
         switch (Case) {
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ACK Follow Unfollow~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 4:
@@ -211,15 +223,23 @@ public class EncoderDecoder implements MessageEncoderDecoder {
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Notification Msg ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 9:
                 byte [] Content = ((Notification) message).getContent().getBytes();
-                byte [] Notification = new byte[3+ Content.length];
-                Character PM_Post = ((Notification) message).getPM_Post();
+                byte [] sender = ((Notification)message).getPostingUserName().getBytes();
+                byte [] Notification = new byte[3+sender.length+Content.length+2];
+                char PM_Post = ((Notification) message).getPM_Post();
+                byte PostPM = 0;
+                if (PM_Post == '1')
+                    PostPM = 1;
                 Notification[0] = shortToBytes(((Notification) message).getOpcode())[0];
                 Notification[1] = shortToBytes(((Notification) message).getOpcode())[1];
-                Notification[2] = PM_Post.toString().getBytes()[0];
+                Notification[2] = PostPM;
+                for (int j=0; j<sender.length;j++)
+                    Notification[j+3]=sender[j];
+                Notification[3+sender.length]='\0';
                 for (int i = 0; i <Content.length ; i++) {
-                    Notification[i+3]=Content[i];
+                    Notification[i+4+sender.length]=Content[i];
                 }
-
+                Notification[Notification.length-1]='\0';
+                return Notification;
 
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Error MSG ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             case 11:

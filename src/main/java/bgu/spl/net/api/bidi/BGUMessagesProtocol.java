@@ -63,28 +63,29 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         //~~~~~~~~~~~~~~~~~~~~~~~LOGOUT~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof Logout) {
             Logout logout = (Logout)message;
-            if(ProtocolLogin){
+            if(!ProtocolLogin){
                 Connection.send(id, new ErrorMessage((short) 11, (short) 3));
             }
             else{
                 Connection.send(id, new ACK((short)10, (short)3));
+                dataBase.disconnectUser(ProtocolUserName);
                 ProtocolLogin = false;
                 ProtocolUserName = null;
                 Connection.disconnect(id);
-
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~FOLLOW\UN-FOLLOW~~~~~~~~~~~~~~~
         else if (message instanceof Follow_UnFollow) {
             Follow_UnFollow follow_unFollow = ((Follow_UnFollow) message);
-            if (ProtocolLogin) {
+            if (!ProtocolLogin) {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 4));
             }// the client is connected.
             else {
                 List<String> successFollow_UnFollow;
                 if (follow_unFollow.isFollow_true_Unfollow_false())
                     successFollow_UnFollow = dataBase.TryFollow(follow_unFollow.getUserNameList(), ProtocolUserName);
-                successFollow_UnFollow = dataBase.TryUnFollow(follow_unFollow.getUserNameList(), ProtocolUserName);
+                else
+                    successFollow_UnFollow = dataBase.TryUnFollow(follow_unFollow.getUserNameList(), ProtocolUserName);
 
                 if (successFollow_UnFollow.size() > 0) {
                     ACK ack = new ACK((short) 10, (short) 4);
@@ -98,7 +99,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         //~~~~~~~~~~~~~~~~~~~~~~~~POST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof Post) {
             Post post = (Post)message;
-            if (ProtocolLogin)
+            if (!ProtocolLogin)
                 Connection.send(id, new ErrorMessage((short) 11, (short) 5));
             else{
                     String content = post.getContent();
@@ -111,7 +112,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                     // taking care of @<userName>
                     for(String user: userNames){
                         // check if this user is registered to the system send him the post.
-                        if(dataBase.containsUser(user)){
+                        if(dataBase.containsUser(user) && !dataBase.getUser(ProtocolUserName).getMyfollowers().contains(user)){
                             sendNotification(ProtocolUserName, '1', content, user);
                         }
                     }
@@ -123,25 +124,25 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 // add to all post saved in the dataBase
                 dataBase.addPostPm(content);
                 // increment user num of posts
-                dataBase.getUser(ProtocolUserName).incrementNumOfPM_POST();
+                dataBase.getUser(ProtocolUserName).incrementNumOfPosts();
+                Connection.send(id, new ACK((short) 10, (short) 5));
                 }
             }
         //~~~~~~~~~~~~~~~~~~~~~~PM~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof PM) {
         PM pm = (PM)message;
-            if (ProtocolLogin || !dataBase.containsUser(pm.getUserNameToSendTo()))
+            if (!ProtocolLogin || !dataBase.containsUser(pm.getUserNameToSendTo()))
                 Connection.send(id, new ErrorMessage((short) 11, (short) 6));
             else{
                 Connection.send(id, new ACK((short) 10, (short) 6));
                 sendNotification(ProtocolUserName, '0', pm.getContent(), pm.getUserNameToSendTo());
                 // add to all post saved in the dataBase
                 dataBase.addPostPm(pm.getContent());
-                dataBase.getUser(ProtocolUserName).incrementNumOfPM_POST();
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~USER-LIST~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof UserListRequest) {
-            if (ProtocolLogin) {
+            if (!ProtocolLogin) {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 7));
             } else {
                 String str = dataBase.toStringLists(dataBase.getListRegistrationOrder());
@@ -154,7 +155,7 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         else if (message instanceof StatsRequest) {
             StatsRequest statsrequest = (StatsRequest) message;
             // if the user name we want to get data on did not register
-            if (ProtocolLogin || !dataBase.containsUser(statsrequest.getUserNameToGetDataOn()))
+            if (!ProtocolLogin || !dataBase.containsUser(statsrequest.getUserNameToGetDataOn()))
                 Connection.send(id, new ErrorMessage((short) 11, (short) 8));
             else {
                 ACK ack = new ACK((short) 10, (short) 8);

@@ -69,6 +69,11 @@ public class DataBase {
 		getUser(bguUser).setLogIn(true);
 	}
 
+	public void disconnectUser(String bguUser){
+		iDToCustomer.remove(bguUser);
+		getUser(bguUser).setLogIn(false);
+	}
+
 	public List<String> TryFollow(List<String> userNamesToFollow, String UserName){
 		BGUUser bguUser = getUser(UserName);
 		List<String> sucssesFollowers = new Vector<>();
@@ -121,6 +126,5 @@ public class DataBase {
 	public void addPostPm (String content){
 	    postsPm.add(content);
     }
-
 
 }

@@ -79,5 +79,5 @@ public class BGUUser {
         return FutreMessagesToBeSent;
     }
 
-    public void incrementNumOfPM_POST(){numOfPosts++;}
+    public void incrementNumOfPosts(){numOfPosts++;}
 }

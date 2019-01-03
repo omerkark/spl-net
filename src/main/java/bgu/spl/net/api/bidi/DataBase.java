@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DataBase {
 
-	// all users how registered to the system.
+	// all users registered in the system.
 	private ConcurrentHashMap<String, BGUUser> users;
     // hash map between an id and a client for users conncted to the system.
     private ConcurrentHashMap<String, Integer> iDToCustomer;
@@ -35,11 +35,7 @@ public class DataBase {
 
     // check if the user is already registered to the sys by user name.
     public boolean containsUser(String bguUserName){
-	    for(String userName: users.keySet()){
-	    	if(userName.equals(bguUserName))
-	    		return true;
-		}
-	    return false;
+		return users.containsKey(bguUserName);
     }
 
     // returns the user if exists or null otherwise

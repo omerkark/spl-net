@@ -32,18 +32,21 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             String name = ((Register) message).getUserName();
             String password = ((Register) message).getPassWord();
             BGUUser bguUser = new BGUUser(name, password);
-            // the user is already registered or there is a user with the same name
-            if (dataBase.containsUser(bguUser.getUserName())) {
-                Connection.send(id, new ErrorMessage((short) 11, (short) 1));
-            } else {
-                // register a new user.
-                dataBase.addCustomer(bguUser);
-                Connection.send(id, new ACK((short) 10, (short) 1));
+            synchronized (dataBase) {
+                // the user is already registered or there is a user with the same name
+                if (dataBase.containsUser(bguUser.getUserName())) {
+                    Connection.send(id, new ErrorMessage((short) 11, (short) 1));
+                } else {
+                    // register a new user.
+                    dataBase.addCustomer(bguUser);
+                    Connection.send(id, new ACK((short) 10, (short) 1));
+                }
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~~LOGIN~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof Login) {
             Login login = (Login) message;
+            synchronized (dataBase.getUser(login.getUserName())) {
             if (!dataBase.containsUser(login.getUserName()) ||
                     !dataBase.getUser(login.getUserName()).getPassWord().equals(login.getPassWord()) ||
                     ProtocolLogin == true ||
@@ -52,7 +55,6 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 2));
             }
             else {
-                synchronized (dataBase.getUser(ProtocolUserName)) {
                     dataBase.connectUser(id, login.getUserName());
                     ProtocolLogin = true;
                     ProtocolUserName = login.getUserName();

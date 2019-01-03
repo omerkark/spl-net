@@ -11,9 +11,8 @@ public class TPCMain {
 
     public static void main(String[] args) {
 
-        DataBase dataBase = DataBase.getInstance();
-
-
+        DataBase dataBase = new DataBase();
+        
         Server.threadPerClient(
                 7777, //port
                 () -> new BGUMessagesProtocol(dataBase), //protocol factory

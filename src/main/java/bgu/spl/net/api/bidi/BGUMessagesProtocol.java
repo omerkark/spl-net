@@ -46,18 +46,22 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             Login login = (Login) message;
             if (!dataBase.containsUser(login.getUserName()) ||
                     !dataBase.getUser(login.getUserName()).getPassWord().equals(login.getPassWord()) ||
-                    ProtocolLogin == true) {
+                    ProtocolLogin == true ||
+                    dataBase.isConnected(login.getUserName()) != -1)
+            {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 2));
             }
             else {
-                dataBase.connectUser(id, login.getUserName());
-                ProtocolLogin = true;
-                ProtocolUserName = login.getUserName();
-                Connection.send(id, new ACK((short) 10, (short) 2));
-                //check if he has future messages and send them.
-                ConcurrentLinkedQueue<Notification> futureMessages = dataBase.getUser(ProtocolUserName).getFutreMessagesToBeSent();
-                while (futureMessages.size() > 0)
-                    Connection.send(id, futureMessages.poll());
+                synchronized (dataBase.getUser(ProtocolUserName)) {
+                    dataBase.connectUser(id, login.getUserName());
+                    ProtocolLogin = true;
+                    ProtocolUserName = login.getUserName();
+                    Connection.send(id, new ACK((short) 10, (short) 2));
+                    //check if he has future messages and send them.
+                    ConcurrentLinkedQueue<Notification> futureMessages = dataBase.getUser(ProtocolUserName).getFutreMessagesToBeSent();
+                    while (futureMessages.size() > 0)
+                        Connection.send(id, futureMessages.poll());
+                }
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~LOGOUT~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,12 +70,14 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             if(!ProtocolLogin){
                 Connection.send(id, new ErrorMessage((short) 11, (short) 3));
             }
-            else{
-                Connection.send(id, new ACK((short)10, (short)3));
-                dataBase.disconnectUser(ProtocolUserName);
-                ProtocolLogin = false;
-                ProtocolUserName = null;
-                Connection.disconnect(id);
+            else {
+                synchronized (dataBase.getUser(ProtocolUserName)) {
+                    dataBase.disconnectUser(ProtocolUserName);
+                    ProtocolLogin = false;
+                    ProtocolUserName = null;
+                    Connection.send(id, new ACK((short) 10, (short) 3));
+                    Connection.disconnect(id);
+                }
             }
         }
         //~~~~~~~~~~~~~~~~~~~~~~~~FOLLOW\UN-FOLLOW~~~~~~~~~~~~~~~
@@ -173,12 +179,14 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
             Notification notification = new Notification(pm_post, userName, content);
             int IdConnectionToSendTo = dataBase.isConnected(userToSendTo);
             // the user I want to send to is connected - send NOW
-            if(IdConnectionToSendTo!= -1){
-                Connection.send(IdConnectionToSendTo, notification);
-            }// not connected i will save in his messages To send Queue.
-            else{
-                BGUUser bguUser = dataBase.getUser(userToSendTo);
-                bguUser.addToFuterMessage(notification);
+            synchronized (dataBase.getUser(userToSendTo)) {
+                if (IdConnectionToSendTo != -1) {
+                    Connection.send(IdConnectionToSendTo, notification);
+                }// not connected i will save in his messages To send Queue.
+                else {
+                    BGUUser bguUser = dataBase.getUser(userToSendTo);
+                    bguUser.addToFuterMessage(notification);
+                }
             }
         }
 

@@ -3,45 +3,39 @@ package bgu.spl.net.api.bidi;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DataBase {
 
-    private static class SingletonDataBase {
-		private static DataBase DateBaseInstance = new DataBase();
-	}
-
-	// all users how registered to the system.
-	private HashMap<String, BGUUser> users;
+	// all users registered in the system.
+	private ConcurrentHashMap<String, BGUUser> users;
     // hash map between an id and a client for users conncted to the system.
-    private HashMap<String, Integer> iDToCustomer;
+    private ConcurrentHashMap<String, Integer> iDToCustomer;
     // all users how wver registered.
     private List<String> listRegistrationOrder;
     private List<String> postsPm;
+	private ReadWriteLock userListLock;
 
-	public static DataBase getInstance() {
-		return SingletonDataBase.DateBaseInstance;
-	}
-
-	private DataBase(){
-	    users = new HashMap<>();
-	    iDToCustomer = new HashMap<>();
+	public DataBase(){
+	    users = new ConcurrentHashMap<>();
+	    iDToCustomer = new ConcurrentHashMap<>();
 	    listRegistrationOrder = new Vector<>();
 	    postsPm = new Vector<>();
+	    userListLock = new ReentrantReadWriteLock(true);
 	}
 
 	public void addCustomer(BGUUser bguUser){
-	    //TODO: think if we need to sync can a few people try to add at the same time ?
-	    users.put(bguUser.getUserName(), bguUser);
-	    listRegistrationOrder.add(bguUser.getUserName());
+		userListLock.readLock().lock();
+		users.put(bguUser.getUserName(), bguUser);
+		listRegistrationOrder.add(bguUser.getUserName());
+		userListLock.readLock().unlock();
     }
 
     // check if the user is already registered to the sys by user name.
     public boolean containsUser(String bguUserName){
-	    for(String userName: users.keySet()){
-	    	if(userName == bguUserName)
-	    		return true;
-		}
-	    return false;
+		return users.containsKey(bguUserName);
     }
 
     // returns the user if exists or null otherwise
@@ -67,6 +61,11 @@ public class DataBase {
 		iDToCustomer.put(bguUser ,id);
 		// change the status of the customer to true
 		getUser(bguUser).setLogIn(true);
+	}
+
+	public void disconnectUser(String bguUser){
+		iDToCustomer.remove(bguUser);
+		getUser(bguUser).setLogIn(false);
 	}
 
 	public List<String> TryFollow(List<String> userNamesToFollow, String UserName){
@@ -109,18 +108,19 @@ public class DataBase {
 	}
 
 	public String toStringLists(List<String> listToString) {
+		userListLock.writeLock().lock();
 		Integer i = listToString.size();
 		String str = i.toString();
 		for(String s: listToString){
 			str += "\0" + s;
 		}
 		str += "\0";
+		userListLock.writeLock().unlock();
 		return str;
 	}
 
 	public void addPostPm (String content){
 	    postsPm.add(content);
     }
-
 
 }

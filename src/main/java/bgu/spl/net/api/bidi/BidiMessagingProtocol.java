@@ -6,7 +6,6 @@ public interface BidiMessagingProtocol<T>  {
 	**/
 
     void start(int connectionId, Connections<T> connections);
-    // look at the protocal they did.
 
 
     void process(T message);

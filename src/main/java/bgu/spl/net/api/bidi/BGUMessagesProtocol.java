@@ -46,26 +46,29 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
         //~~~~~~~~~~~~~~~~~~~~~~~~~LOGIN~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof Login) {
             Login login = (Login) message;
-            synchronized (dataBase.getUser(login.getUserName())) {
-            if (!dataBase.containsUser(login.getUserName()) ||
-                    !dataBase.getUser(login.getUserName()).getPassWord().equals(login.getPassWord()) ||
-                    ProtocolLogin == true ||
-                    dataBase.isConnected(login.getUserName()) != -1)
-            {
-                Connection.send(id, new ErrorMessage((short) 11, (short) 2));
-            }
-            else {
-                    dataBase.connectUser(id, login.getUserName());
-                    ProtocolLogin = true;
-                    ProtocolUserName = login.getUserName();
-                    Connection.send(id, new ACK((short) 10, (short) 2));
-                    //check if he has future messages and send them.
-                    ConcurrentLinkedQueue<Notification> futureMessages = dataBase.getUser(ProtocolUserName).getFutreMessagesToBeSent();
-                    while (futureMessages.size() > 0)
-                        Connection.send(id, futureMessages.poll());
+            if (dataBase.containsUser(login.getUserName())) {
+                synchronized (dataBase.getUser(login.getUserName())) {
+                    if (!dataBase.containsUser(login.getUserName()) ||
+                            !dataBase.getUser(login.getUserName()).getPassWord().equals(login.getPassWord()) ||
+                            ProtocolLogin == true ||
+                            dataBase.isConnected(login.getUserName()) != -1) {
+                        Connection.send(id, new ErrorMessage((short) 11, (short) 2));
+                    } else {
+                        dataBase.connectUser(id, login.getUserName());
+                        ProtocolLogin = true;
+                        ProtocolUserName = login.getUserName();
+                        Connection.send(id, new ACK((short) 10, (short) 2));
+                        //check if he has future messages and send them.
+                        ConcurrentLinkedQueue<Notification> futureMessages = dataBase.getUser(ProtocolUserName).getFutreMessagesToBeSent();
+                        while (futureMessages.size() > 0)
+                            Connection.send(id, futureMessages.poll());
+                    }
                 }
             }
+            else
+                Connection.send(id, new ErrorMessage((short) 11, (short) 2));
         }
+
         //~~~~~~~~~~~~~~~~~~~~~~~LOGOUT~~~~~~~~~~~~~~~~~~~~~~~~~~~
         else if (message instanceof Logout) {
             Logout logout = (Logout)message;

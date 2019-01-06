@@ -29,6 +29,7 @@ public abstract class BaseServer<T> implements Server<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void serve() {
 
         try (ServerSocket serverSock = new ServerSocket(port)) {
@@ -46,10 +47,10 @@ public abstract class BaseServer<T> implements Server<T> {
                         clientSock,
                         encdecFactory.get(),
                         protocolFactory.get(),
-                        connectionId);
+                        connectionId,
+                        bguConnections);
                 // increase ID for the next Connection;
                 bguConnections.addConnection(handler, connectionId);
-                handler.getProtocol().start(connectionId, bguConnections);
                 connectionId++;
                 execute(handler);
             }

@@ -112,9 +112,11 @@ public class Reactor<T> implements Server<T> {
                 clientChan,
                 this, connectionId.get(), connections);
         connections.addConnection(handler, connectionId.get());
-        connectionId.incrementAndGet();
+
         // increase ID for the next Connection;
         clientChan.register(selector, SelectionKey.OP_READ, handler);
+        pool.submit(handler, handler::startProtocol);
+        connectionId.incrementAndGet();
     }
 
     private void handleReadWrite(SelectionKey key) {

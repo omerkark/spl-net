@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-public class EncoderDecoder implements MessageEncoderDecoder {
+public class EncoderDecoder implements MessageEncoderDecoder<Message> {
 
     private byte[] bytes = new byte[1 << 10];
     private byte [] opCodeArr = new byte[3];
@@ -20,7 +20,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Decoder~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     @Override
-    public Object decodeNextByte(byte nextByte)  {
+    public Message decodeNextByte(byte nextByte)  {
 
         if (OpcodeCounter < 2) {
             opCodeArr[OpcodeCounter] = nextByte;
@@ -134,11 +134,12 @@ public class EncoderDecoder implements MessageEncoderDecoder {
                 return null;
 
         }
-        return "hellow world";
+        return null;
     }
 
-   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Assistance Functions~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    private Object parseLogReg(int opcode,byte nextByte) {
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Assistance Functions~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    private Message parseLogReg(int opcode,byte nextByte) {
 
         if (nextByte != '\0') {
             pushByte(nextByte);
@@ -200,7 +201,7 @@ public class EncoderDecoder implements MessageEncoderDecoder {
     }
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Encoder~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     @Override
-    public byte[] encode(Object message) {
+    public byte[] encode(Message message) {
         int Case;
         if (message instanceof ACK)
             Case = ((ACK) message).getOpCodeForMessage();

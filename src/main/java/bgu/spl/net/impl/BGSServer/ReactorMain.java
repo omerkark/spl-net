@@ -12,9 +12,9 @@ public class ReactorMain {
         DataBase dataBase = new DataBase();
         BGUConnections bguConnections = new BGUConnections();
 
+        //Runtime.getRuntime().availableProcessors(),
         Server.reactor(
-                Runtime.getRuntime().availableProcessors(),
-                7777, //port
+                Integer.parseInt(args[1]),Integer.parseInt(args[0]), //port
                 () ->  new BGUMessagesProtocol(dataBase), //protocol factory
                 EncoderDecoder::new, //message encoder decoder factory
                 bguConnections

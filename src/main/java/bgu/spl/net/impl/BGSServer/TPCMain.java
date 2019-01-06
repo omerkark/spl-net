@@ -12,7 +12,7 @@ public class TPCMain {
         DataBase dataBase = new DataBase();
         
         Server.threadPerClient(
-                9999, //port
+                Integer.parseInt(args[0]), //port
                 () -> new BGUMessagesProtocol(dataBase), //protocol factory
                 EncoderDecoder::new //message encoder decoder factory
         ).serve();

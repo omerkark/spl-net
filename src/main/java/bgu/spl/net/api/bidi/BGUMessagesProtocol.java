@@ -124,14 +124,15 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                     // taking care of @<userName>
                     for(String user: userNames){
                         // check if this user is registered to the system send him the post.
-                        if(dataBase.containsUser(user) && !dataBase.getUser(ProtocolUserName).getMyfollowers().contains(user)){
+                        if(dataBase.containsUser(user)){
                             sendNotification(ProtocolUserName, '1', content, user);
                         }
                     }
                     // send to all my followers
                     BGUUser bguUser = dataBase.getUser(ProtocolUserName);
                     for(String userName: bguUser.getMyfollowers()){
-                        sendNotification(ProtocolUserName,'1',content, userName);
+                        if(!userNames.contains(userName))
+                            sendNotification(ProtocolUserName,'1',content, userName);
                     }
                 // add to all post saved in the dataBase
                 dataBase.addPostPm(content);

@@ -114,11 +114,12 @@ public class BGUMessagesProtocol implements BidiMessagingProtocol<Message> {
                 Connection.send(id, new ErrorMessage((short) 11, (short) 5));
             else{
                     String content = post.getContent();
-                    String [] arr = content.split("@");
+                    String [] arr = content.split(" ");
                     Vector<String> userNames = new Vector<String>();
                     for(String s: arr){
-                        String [] temp = s.split(" ");
-                        userNames.add(temp[0]);
+                        if(s.indexOf('@')!= -1 & !userNames.contains(s.substring((s.indexOf('@') +1)))){
+                            userNames.add(s.substring((s.indexOf('@') +1)));
+                        }
                     }
                     // taking care of @<userName>
                     for(String user: userNames){

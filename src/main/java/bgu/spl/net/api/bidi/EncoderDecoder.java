@@ -253,8 +253,9 @@ public class EncoderDecoder implements MessageEncoderDecoder {
    private  byte[] encodeACK(ACK message){
        short ack = 10;
        String msg = ((ACK) message).getOptional();
-       byte[] users = msg.getBytes();
-       byte[] Bytes = new byte[users.length+4];
+       int index = msg.indexOf('\0');
+       byte[] users = msg.substring(index+1).getBytes();
+       byte[] Bytes = new byte[users.length+6];
        if (((ACK)message).getOpCodeForMessage()==8)
            Bytes = new byte [10];
        Bytes[0]=shortToBytes(ack)[0];
@@ -271,12 +272,11 @@ public class EncoderDecoder implements MessageEncoderDecoder {
            Bytes[9] = shortToBytes(Short.valueOf(postFollow[2]))[1];
        }
        else{
-       int indexOfNumber = msg.indexOf('\0');
-       Bytes[4]= shortToBytes(Short.valueOf(msg.substring(0,indexOfNumber)))[0];
-       Bytes[5]=shortToBytes(Short.valueOf(msg.substring(0,indexOfNumber)))[1];
+       Bytes[4]= shortToBytes(Short.valueOf(msg.substring(0,index)))[0];
+       Bytes[5]=shortToBytes(Short.valueOf(msg.substring(0,index)))[1];
 
-       for (int i=2; i<users.length;i++) {
-           Bytes[i + 4] = users[i];
+       for (int i=0; i<users.length;i++) {
+           Bytes[i + 6] = users[i];
         }
        }
        return Bytes;
